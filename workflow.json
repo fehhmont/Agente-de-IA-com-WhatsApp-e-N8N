@@ -1,0 +1,552 @@
+{
+  "name": "teste",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -360,
+        200
+      ],
+      "id": "12df3b06-db2a-4866-9a79-75f2cb1b9c72",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "uoS5p3gxcSRVQ4fR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Dados').item.json.session }}",
+        "chatId": "={{ $('Dados').item.json.chatId }}",
+        "text": "= {{ $json.output }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        80,
+        -40
+      ],
+      "id": "89bd0220-7690-4b41-911a-52c857cd6a45",
+      "name": "Enviar Resposta do Bot",
+      "credentials": {
+        "wahaApi": {
+          "id": "1aPE0J4YyI3pv0Ww",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f24c65bf-d32c-43b1-9b26-88e8b457eec9",
+              "leftValue": "={{ $('Webhook').item.json.body.payload.from }}",
+              "rightValue": "@c.us",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "23d8c199-566b-4e89-8668-3e28080f55de",
+              "leftValue": "={{ $('Webhook').item.json.body.event }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "message"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -660,
+        -40
+      ],
+      "id": "b56837b3-c67e-48cc-8ed1-2ab3646ef311",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8198b741-2ed1-4c86-8c6c-e475d2bc853f",
+              "name": "session",
+              "value": "={{ $('Webhook').item.json.body.session }}",
+              "type": "string"
+            },
+            {
+              "id": "8d0c0f17-b1c1-4eb0-ae61-1380bd1eb631",
+              "name": "chatId",
+              "value": "={{ $('Webhook').item.json.body.payload.from }}",
+              "type": "string"
+            },
+            {
+              "id": "1ae1994e-fa00-4f4c-b132-9462acbfc05b",
+              "name": "pushName",
+              "value": "={{ $json.body.payload._data.notifyName }}",
+              "type": "string"
+            },
+            {
+              "id": "ca195c10-fbbd-41d5-8c2d-973a81d105e6",
+              "name": "payload_id",
+              "value": "={{ $('Webhook').item.json.body.payload.id }}",
+              "type": "string"
+            },
+            {
+              "id": "5ec33562-0823-4510-b51b-6981d80db82c",
+              "name": "event",
+              "value": "={{ $('Webhook').item.json.body.event }}",
+              "type": "string"
+            },
+            {
+              "id": "38b40646-f92c-410b-b0a2-805855e53b53",
+              "name": "message",
+              "value": "={{ $json.body.payload.body }}",
+              "type": "string"
+            },
+            {
+              "id": "a6ce9469-8024-4169-b7fc-5f2b257ccdd3",
+              "name": "fromMe",
+              "value": "={{ $json.body.payload.fromMe }}",
+              "type": "boolean"
+            },
+            {
+              "id": "new-timestamp",
+              "name": "messageTimestamp",
+              "value": "={{ $json.body.payload.timestamp }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        -40
+      ],
+      "id": "9641bd97-1e9f-4f87-b786-496410c868cf",
+      "name": "Dados"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -840,
+        -40
+      ],
+      "id": "3cde6ced-6633-477c-8c3e-c1e2b93cc8f1",
+      "name": "Webhook",
+      "webhookId": "36219c64-f6fe-401a-8f5d-5d24000d41b6"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "Objetivo do Agente: Atender, validar empresas com base em uma lista interna confidencial, coletar dados e criar chamados, seguindo rigorosamente as regras de segurança e o fluxo de trabalho abaixo.\n\n⚠️ Regra de Segurança Principal (MUITO IMPORTANTE)\nÉ ESTRITAMENTE PROIBIDO revelar, sugerir ou confirmar qualquer nome da lista de empresas para o cliente. A \"Base de Conhecimento\" abaixo é para sua consulta interna e secreta. Você NUNCA deve dizer \"não encontrei a empresa X, mas encontrei a empresa Y\" ou \"a empresa que você procura está na minha lista?\".\n\nSua única função é:\n\nReceber o nome da empresa do cliente.\n\nConsultar sua lista interna.\n\nResponder apenas se encontrou (\"Sim, localizei\") ou não (\"Não localizei\"), sem dar nenhuma outra informação.\n\nBase de Conhecimento Interna (Confidencial)\nVocê deve usar esta lista para validar a empresa e capturar o token associado.\n\n(........)\n\n\nFluxo de Trabalho Passo a Passo (Nova Dinâmica)\n1. Saudação Inicial e Menu de Opções\n\nQuando um usuário iniciar a conversa, sua primeira ação é cumprimentá-lo de acordo com o horário do dia (Bom dia, Boa tarde ou Boa noite).\n\nImediatamente após a saudação, apresente as seguintes opções:\n\n\"Olá, [Bom dia/Boa tarde/Boa noite]! Como posso ajudar?\n\nDigite 1 para falar com um de nossos técnicos.\n\nDigite 2 para abrir um chamado.\"\n\n2. Rota de Atendimento Humano (Se o usuário escolher \"1\")\n\nSe a resposta do usuário for 1:\n\n2.1. Execute a tool Alterar_conversa_humano.\n\n2.2. Responda ao cliente para finalizar sua parte do atendimento: \"Certo. Logo um de nossos técnicos irá entrar em contato com você.\"\n\n3. Rota de Abertura de Chamado (Se o usuário escolher \"2\")\n\nSe a resposta do usuário for 2, inicie o fluxo de criação de chamado:\n\n3.1. Validação da Empresa:\n\nPergunte: \"Entendido. Para começarmos, de qual empresa você faz parte?\"\n\nUse a resposta do cliente para consultar sua \"Base de Conhecimento Interna\".\n\nSe a empresa for encontrada, capture e armazene o token associado a ela.\n\nSe não for encontrada, vá para o Passo 3.5 (Regra de Exceção).\n\n3.2. Instrução para Coleta de Dados:\n\nApós validar a empresa, confirme e dê a instrução: \"Certo, localizei a empresa. Agora, por favor, descreva seu problema em um único texto. Inclua também no texto seu nome completo, e-mail e um telefone para contato.\"\n\n3.3. Extração de Dados do Texto:\n\nAguarde o texto do cliente. Ao recebê-lo, sua tarefa é analisar e extrair as seguintes informações:\n\nNome: O nome completo do solicitante.\n\nEmail: O endereço de e-mail.\n\nTelefone: O número de telefone.\n\nDescrição: O relato completo do problema.\n\nAssunto: Uma frase curta e objetiva que resuma o problema (que você deve gerar a partir da descrição).\n\n3.4. Criação do Chamado e Confirmação Final:\n\nExecute a ferramenta para criar o chamado, passando os dados extraídos como parâmetros na ordem correta:\n\nparametro 0: O token da empresa.\n\nparametro 1: O assunto.\n\nparametro 2: A descricao.\n\nparametro 3: O email.\n\nparametro 4: O telefone.\n\nparametro 5: O nome.\n\nA ferramenta retornará o número do ticket. Capture este número e informe ao cliente:\n\n\"Pronto! Seu chamado foi aberto com o número [número do chamado]. Em breve nossa equipe entrará em contato.\"\n\n3.5. Regra de Exceção (Empresa não encontrada):\n\nSe o nome da empresa não for encontrado na sua lista, responda: \"Não consegui localizar a empresa informada em nosso sistema. Por favor, verifique se o nome foi digitado corretamente.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -300,
+        -40
+      ],
+      "id": "782404bf-e51c-430f-9ff8-38f2267b2588",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Criar chamado",
+        "method": "POST",
+        "url": "https://apiintegracao.milvus.com.br/api/chamado/criar",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "cliente_id",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "chamado_assunto",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "chamado_descricao",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', ``, 'string') }}"
+            },
+            {
+              "name": "chamado_email",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', ``, 'string') }}"
+            },
+            {
+              "name": "chamado_telefone",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters4_Value', ``, 'string') }}"
+            },
+            {
+              "name": "chamado_contato",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters5_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        200
+      ],
+      "id": "950570db-4b3b-4de1-a04f-cda58817a7d9",
+      "name": "Criar chamado",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "xrDXncNC5niWKyLg",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        -180,
+        200
+      ],
+      "id": "4bc2879f-f2b8-44f4-bb66-ae36b804e1a9",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "O31lT9mj8zkVOZlZ",
+          "name": "Redis account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "accept": "application/json, text/plain, */*",
+            "content-type": "application/json",
+            "user-agent": "WAHA/2025.6.4",
+            "x-webhook-request-id": "01JZK2VP4Y7E9Y1WSH6EVRTR20",
+            "x-webhook-timestamp": "1751913453725",
+            "content-length": "2826",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "host": "host.docker.internal:5678",
+            "connection": "keep-alive"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "evt_01jzk2vp4w8pyp71zxx3c8cash",
+            "timestamp": 1751913453725,
+            "event": "message",
+            "session": "default",
+            "metadata": {},
+            "me": {
+              "id": "5511952208243@c.us",
+              "pushName": "Felipe Anthony"
+            },
+            "payload": {
+              "id": "false_5511976701846@c.us_81B4A905B6442CB013225287C5A39C0E",
+              "timestamp": 1751913457,
+              "from": "5511976701846@c.us",
+              "fromMe": false,
+              "source": "app",
+              "to": "5511952208243@c.us",
+              "body": "1",
+              "hasMedia": false,
+              "media": null,
+              "ack": 1,
+              "ackName": "SERVER",
+              "vCards": [],
+              "_data": {
+                "id": {
+                  "fromMe": false,
+                  "remote": "5511976701846@c.us",
+                  "id": "81B4A905B6442CB013225287C5A39C0E",
+                  "_serialized": "false_5511976701846@c.us_81B4A905B6442CB013225287C5A39C0E"
+                },
+                "viewed": false,
+                "body": "1",
+                "type": "chat",
+                "t": 1751913457,
+                "notifyName": "Wan Tecnologia",
+                "from": "5511976701846@c.us",
+                "to": "5511952208243@c.us",
+                "ack": 1,
+                "invis": false,
+                "isNewMsg": true,
+                "star": false,
+                "kicNotified": false,
+                "recvFresh": true,
+                "isFromTemplate": false,
+                "pollInvalidated": false,
+                "isSentCagPollCreation": false,
+                "latestEditMsgKey": null,
+                "latestEditSenderTimestampMs": null,
+                "mentionedJidList": [],
+                "groupMentions": [],
+                "isEventCanceled": false,
+                "eventInvalidated": false,
+                "isVcardOverMmsDocument": false,
+                "isForwarded": false,
+                "isQuestion": false,
+                "hasReaction": false,
+                "viewMode": "VISIBLE",
+                "messageSecret": {
+                  "0": 166,
+                  "1": 135,
+                  "2": 3,
+                  "3": 152,
+                  "4": 100,
+                  "5": 245,
+                  "6": 35,
+                  "7": 228,
+                  "8": 177,
+                  "9": 106,
+                  "10": 245,
+                  "11": 194,
+                  "12": 242,
+                  "13": 144,
+                  "14": 230,
+                  "15": 92,
+                  "16": 28,
+                  "17": 115,
+                  "18": 153,
+                  "19": 50,
+                  "20": 215,
+                  "21": 140,
+                  "22": 138,
+                  "23": 63,
+                  "24": 43,
+                  "25": 91,
+                  "26": 129,
+                  "27": 35,
+                  "28": 78,
+                  "29": 90,
+                  "30": 184,
+                  "31": 181
+                },
+                "productHeaderImageRejected": false,
+                "lastPlaybackProgress": 0,
+                "isDynamicReplyButtonsMsg": false,
+                "isCarouselCard": false,
+                "parentMsgId": null,
+                "callSilenceReason": null,
+                "isVideoCall": false,
+                "callDuration": null,
+                "callCreator": null,
+                "callParticipants": null,
+                "isCallLink": null,
+                "callLinkToken": null,
+                "isMdHistoryMsg": false,
+                "stickerSentTs": 0,
+                "isAvatar": false,
+                "lastUpdateFromServerTs": 0,
+                "invokedBotWid": null,
+                "bizBotType": null,
+                "botResponseTargetId": null,
+                "botPluginType": null,
+                "botPluginReferenceIndex": null,
+                "botPluginSearchProvider": null,
+                "botPluginSearchUrl": null,
+                "botPluginSearchQuery": null,
+                "botPluginMaybeParent": false,
+                "botReelPluginThumbnailCdnUrl": null,
+                "botMessageDisclaimerText": null,
+                "botMsgBodyType": null,
+                "reportingTokenInfo": {
+                  "reportingToken": {
+                    "0": 173,
+                    "1": 189,
+                    "2": 253,
+                    "3": 154,
+                    "4": 152,
+                    "5": 47,
+                    "6": 118,
+                    "7": 203,
+                    "8": 141,
+                    "9": 34,
+                    "10": 86,
+                    "11": 151,
+                    "12": 252,
+                    "13": 56,
+                    "14": 241,
+                    "15": 180
+                  },
+                  "version": 2,
+                  "reportingTag": {
+                    "0": 1,
+                    "1": 8,
+                    "2": 244,
+                    "3": 92,
+                    "4": 213,
+                    "5": 208,
+                    "6": 75,
+                    "7": 188,
+                    "8": 10,
+                    "9": 76,
+                    "10": 128,
+                    "11": 43,
+                    "12": 6,
+                    "13": 14,
+                    "14": 175,
+                    "15": 21,
+                    "16": 160,
+                    "17": 216,
+                    "18": 180,
+                    "19": 92
+                  }
+                },
+                "requiresDirectConnection": null,
+                "bizContentPlaceholderType": null,
+                "hostedBizEncStateMismatch": false,
+                "senderOrRecipientAccountTypeHosted": false,
+                "placeholderCreatedWhenAccountIsHosted": false,
+                "links": []
+              }
+            },
+            "engine": "WEBJS",
+            "environment": {
+              "version": "2025.6.4",
+              "engine": "WEBJS",
+              "tier": "CORE",
+              "browser": "/usr/bin/chromium"
+            }
+          },
+          "webhookUrl": "http://host.docker.internal:5678/webhook-test/webhook",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta do Bot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar chamado": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "44bed931-71a3-4ec9-ba9f-985e972ec07a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "79975281cab3c352625073595ad8cb6887d168b689651502842aa01ff69c0e5e"
+  },
+  "id": "mDyEWL5jUJHd0PKt",
+  "tags": []
+}
